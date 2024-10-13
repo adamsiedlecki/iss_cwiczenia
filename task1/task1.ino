@@ -8,11 +8,16 @@ int IN2 = A1;
 int IN3 = A2;
 int IN4 = A3;
 
-int powerLeft = 100;
+int powerLeft = 100; // moc silnika 0 - 255
 int powerRight = 100;
 
+// zmiany stanu sensora obrotu (42 na 1 obrót)
 int leftChanges = 0;
 int rightChanges = 0;
+
+float leftDistanceCm = 0;
+float rightDistanceCm = 0;
+
 float changesToCmFactor = 42.0 * 20.41; // 42 zmiany (CHANGE) na pinie sensora obrotu przypadają na jeden obrót, który wynosi 20.41cm
 float startingDistanceLeft = 0;
 const float changeFactor = 0.5;
@@ -31,9 +36,11 @@ void setup() {
 
   goForward(200);
 
-  log("left distance cm: ", getLeftDistance());
-  log("right distance cm: ", getRightDistance());
-  log("diff left vs right cm: ", getLeftDistance() - getRightDistance());
+  getLeftDistance(); // zapisujemy stan do globalnych
+  getRightDistance();
+  log("left distance cm: ", leftDistanceCm);
+  log("right distance cm: ", rightDistanceCm);
+  log("diff left - right cm: ", leftDistanceCm - rightDistanceCm);
 }
 void loop() {
 
@@ -47,12 +54,12 @@ void rightRotationIncrement() {
 }
 
 // 20 holes = 65mm | 42 changes = 1 obrot = 20,41cm
-float getLeftDistance(){
-  return leftChanges / changesToCmFactor;
+void getLeftDistance(){
+    leftDistanceCm = leftChanges / changesToCmFactor;
 }
 
-float getRightDistance() {
-  return rightChanges / changesToCmFactor;
+void getRightDistance() {
+  rightDistanceCm = rightChanges / changesToCmFactor;
 }
 
 void cleanPins() {
@@ -63,13 +70,16 @@ void cleanPins() {
 }
 
 void goForward(int distanceCm) {
+  getLeftDistance(); // zapisujemy stan do globalnych
+  getRightDistance();
+
   cleanPins();
-  startingDistanceLeft = getLeftDistance();
+  startingDistanceLeft = leftDistanceCm;
   digitalWrite(IN1, HIGH);
   digitalWrite(IN4, HIGH);
 
-  while ((getLeftDistance() - startingDistanceLeft < distanceCm) ) { // dopóki lewy silnik nie przebył zadanego dystansu
-      differenceBetweenLeftAndRightMotorCm = getLeftDistance() - getRightDistance();
+  while ((leftDistanceCm - startingDistanceLeft < distanceCm) ) { // dopóki lewy silnik nie przebył zadanego dystansu
+      differenceBetweenLeftAndRightMotorCm = leftDistanceCm - rightDistanceCm;
 
       powerRight = powerRight + changeFactor * differenceBetweenLeftAndRightMotorCm;
       powerLeft = powerLeft - changeFactor * differenceBetweenLeftAndRightMotorCm;
@@ -79,6 +89,9 @@ void goForward(int distanceCm) {
 
       analogWrite(ENB, powerRight);
       analogWrite(ENA, powerLeft);
+
+      getLeftDistance(); // zapisujemy stan do globalnych
+      getRightDistance();
   }
   cleanPins();
 }
