@@ -1,6 +1,3 @@
-
-
-
 int ENA = 5; // left motor
 int ENB = 6;
 
@@ -14,6 +11,13 @@ int powerRight = 100;
 
 int leftChanges = 0;
 int rightChanges = 0;
+float changesToCmFactor = 42.0 * 20.41; // 42 zmiany (CHANGE) na pinie sensora obrotu przypadają na jeden obrót, który wynosi 20.41cm
+float startingDistanceLeft = 0;
+const float changeFactor = 0.5;
+float differenceBetweenLeftAndRightMotorCm = 0;
+
+// Ważne:
+// - nie robić definicji w petli, globalne zmienne powinny byc (definicja zmiennej kosztuje)
 
 void setup() {
   Serial.begin(9600);
@@ -33,6 +37,9 @@ void setup() {
   float rightDistance = getRightDistance();
   Serial.print(rightDistance);
 }
+void loop() {
+
+}
 
 void leftRotationIncrement() {
   leftChanges++;
@@ -41,26 +48,13 @@ void rightRotationIncrement() {
   rightChanges++;
 }
 
-void loop() {
-
-}
 // 20 holes = 65mm | 42 changes = 1 obrot = 20,41cm
 float getLeftDistance(){
-  // Serial.println("");
-  // Serial.print("left distance: ");
-  float distanceCm = leftChanges /42.0 *20.41; // TODO nie robić definicji w petli, globalne zmienne powinny byc
-  // Serial.print(distanceCm);
-  // Serial.println(" cm");
-  return distanceCm;
+  return leftChanges / changesToCmFactor;
 }
 
 float getRightDistance() {
-  // Serial.println("");
-  // Serial.print("right distance: ");
-  float distance = rightChanges /42.0 *20.41;
-  // Serial.print(distance);
-  // Serial.println(" cm");
-  return distance;
+  return rightChanges / changesToCmFactor;
 }
 
 void cleanPins() {
@@ -72,37 +66,21 @@ void cleanPins() {
 
 void goForward(int distanceCm) {
   cleanPins();
-  float changeFactor = 0.7;
-  float startingDistanceLeft = getLeftDistance();
-  float startingDistanceRight = getRightDistance();
+  startingDistanceLeft = getLeftDistance();
   digitalWrite(IN1, HIGH);
   digitalWrite(IN4, HIGH);
 
-  unsigned long lastCorrection = millis();
-  while ((getLeftDistance() - startingDistanceLeft <distanceCm) ) {
-    if (millis() - lastCorrection>100) { // co 100ms obimy korekte
-      float difference = getLeftDistance()-getRightDistance();
+  while ((getLeftDistance() - startingDistanceLeft < distanceCm) ) { // dopóki lewy silnik nie przebył zadanego dystansu
+      differenceBetweenLeftAndRightMotorCm = getLeftDistance() - getRightDistance();
 
-      powerRight = powerRight + changeFactor*(difference);
-      powerLeft = powerLeft - changeFactor*(difference);
-      
+      powerRight = powerRight + changeFactor * differenceBetweenLeftAndRightMotorCm;
+      powerLeft = powerLeft - changeFactor * differenceBetweenLeftAndRightMotorCm;
+
       powerRight = normalize(powerRight);
       powerLeft = normalize(powerLeft);
 
       analogWrite(ENB, powerRight);
       analogWrite(ENA, powerLeft);
-      
-    }
-
-    // Serial.print("right power ");
-    // Serial.println(powerRight);
-    // Serial.print("left power ");
-    // Serial.println(powerLeft);
-    // Serial.print("difference ");
-    // Serial.println(difference);
-    
-    //getRightDistance();
-    lastCorrection = millis();
   }
   cleanPins();
 }
@@ -127,6 +105,3 @@ void goLeft() {
   digitalWrite(IN1, HIGH); // TODO
   digitalWrite(IN4, HIGH);
 }
-
-
-
