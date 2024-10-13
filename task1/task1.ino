@@ -1,3 +1,5 @@
+#include "issUtils.h"
+
 int ENA = 5; // left motor
 int ENB = 6;
 
@@ -29,13 +31,9 @@ void setup() {
 
   goForward(200);
 
-  Serial.print("left distance cm: ");
-  float leftDistance = getLeftDistance();
-  Serial.print(leftDistance);
-  
-  Serial.print("right distance cm: ");
-  float rightDistance = getRightDistance();
-  Serial.print(rightDistance);
+  log("left distance cm: ", getLeftDistance());
+  log("right distance cm: ", getRightDistance());
+  log("diff left vs right cm: ", getLeftDistance() - getRightDistance());
 }
 void loop() {
 
