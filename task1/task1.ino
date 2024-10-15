@@ -118,7 +118,6 @@ void goRight(int angle) {
   getRightDistance();
 
   digitalWrite(IN1, HIGH); 
-  digitalWrite(IN4, HIGH);
 
   startingDistanceLeft = leftDistanceCm; // Przy skręcie w prawo, lewe koło będzie się obracać
   angleInRadians = angle*radiansConversionFactor; // Zmiana stopni na radiany
@@ -129,7 +128,6 @@ void goRight(int angle) {
     getLeftDistance(); // zapisujemy stan do globalnych
   }
   cleanPins();
-
 }
 
 
@@ -137,7 +135,6 @@ void goLeft(int angle) {
   getLeftDistance(); // zapisujemy stan do globalnych
   getRightDistance();
 
-  digitalWrite(IN1, HIGH); 
   digitalWrite(IN4, HIGH);
 
   startingDistanceRight = rightDistanceCm; // Przy skręcie w lewo, prawe koło będzie się obracać
@@ -149,5 +146,4 @@ void goLeft(int angle) {
     getRightDistance(); // zapisujemy stan do globalnych
   }
   cleanPins();
-
 }
