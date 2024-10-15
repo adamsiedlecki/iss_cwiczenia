@@ -20,8 +20,14 @@ float rightDistanceCm = 0;
 
 float changesToCmFactor = 42.0 * 20.41; // 42 zmiany (CHANGE) na pinie sensora obrotu przypadają na jeden obrót, który wynosi 20.41cm
 float startingDistanceLeft = 0;
+float startingDistanceRight = 0;
 const float changeFactor = 0.5;
 float differenceBetweenLeftAndRightMotorCm = 0;
+
+const float turningRadius = 0; // TBD potrzebna odległość koła od punktu obrotu, musi być w cm
+float angleInRadians = 0; // Zmienna do przechowywania kąta skrętu w radianach
+const float radiansConversionFactor = 3.14/180; // Stała do przeliczania stopni na radiany
+float arcDistance = 0; //Zmienna do przechowywania dystansu potrzebnego do przejechania żeby uzyskać odpowiedni kąt skrętu
 
 // Ważne:
 // - nie robić definicji w petli, globalne zmienne powinny byc (definicja zmiennej kosztuje)
@@ -107,12 +113,41 @@ void goBack() {
   digitalWrite(IN3, HIGH);
 }
 
-void goRight() {
-  digitalWrite(IN1, HIGH); // TODO
+void goRight(int angle) {
+  getLeftDistance(); // zapisujemy stan do globalnych
+  getRightDistance();
+
+  digitalWrite(IN1, HIGH); 
   digitalWrite(IN4, HIGH);
+
+  startingDistanceLeft = leftDistanceCm; // Przy skręcie w prawo, lewe koło będzie się obracać
+  angleInRadians = angle*radiansConversionFactor; // Zmiana stopni na radiany
+  arcDistance = turningRadius*angleInRadians; // Obliczanie potrzebnego dystantu po łuku
+
+  analogWrite(ENA, 150); // Uruchomienie lewego silnika
+  while ((leftDistanceCm - startingDistanceLeft < arcDistance) ) {
+    getLeftDistance(); // zapisujemy stan do globalnych
+  }
+  cleanPins();
+
 }
 
-void goLeft() {
-  digitalWrite(IN1, HIGH); // TODO
+
+void goLeft(int angle) {
+  getLeftDistance(); // zapisujemy stan do globalnych
+  getRightDistance();
+
+  digitalWrite(IN1, HIGH); 
   digitalWrite(IN4, HIGH);
+
+  startingDistanceRight = rightDistanceCm; // Przy skręcie w lewo, prawe koło będzie się obracać
+  angleInRadians = angle*radiansConversionFactor; // Zmiana stopni na radiany
+  arcDistance = turningRadius*angleInRadians; // Obliczanie potrzebnego dystantu po łuku
+
+  analogWrite(ENB, 150); // Uruchomienie prawego silnika
+  while ((rightDistanceCm - startingDistanceRight < arcDistance) ) {
+    getRightDistance(); // zapisujemy stan do globalnych
+  }
+  cleanPins();
+
 }
