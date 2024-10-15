@@ -76,28 +76,42 @@ void cleanPins() {
 }
 
 void goForward(int distanceCm) {
+  goStraightLine(distanceCm, true);
+}
+
+void goBack(int distanceCm) {
+  goStraightLine(distanceCm, false);
+}
+
+void goStraightLine(int distanceCm, bool isForward) {
+  cleanPins();
   getLeftDistance(); // zapisujemy stan do globalnych
   getRightDistance();
-
-  cleanPins();
   startingDistanceLeft = leftDistanceCm;
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN4, HIGH);
+
+  if (isForward) { // jazda w przód różni się od jazdy w tył tylko pinami do aktywacji
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN4, HIGH);
+  } else {
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, HIGH);
+  }
+
 
   while ((leftDistanceCm - startingDistanceLeft < distanceCm) ) { // dopóki lewy silnik nie przebył zadanego dystansu
-      differenceBetweenLeftAndRightMotorCm = leftDistanceCm - rightDistanceCm;
+    differenceBetweenLeftAndRightMotorCm = leftDistanceCm - rightDistanceCm;
 
-      powerRight = powerRight + changeFactor * differenceBetweenLeftAndRightMotorCm;
-      powerLeft = powerLeft - changeFactor * differenceBetweenLeftAndRightMotorCm;
+    powerRight = powerRight + changeFactor * differenceBetweenLeftAndRightMotorCm;
+    powerLeft = powerLeft - changeFactor * differenceBetweenLeftAndRightMotorCm;
 
-      powerRight = normalize(powerRight);
-      powerLeft = normalize(powerLeft);
+    powerRight = normalize(powerRight);
+    powerLeft = normalize(powerLeft);
 
-      analogWrite(ENB, powerRight);
-      analogWrite(ENA, powerLeft);
+    analogWrite(ENB, powerRight);
+    analogWrite(ENA, powerLeft);
 
-      getLeftDistance(); // zapisujemy stan do globalnych
-      getRightDistance();
+    getLeftDistance(); // zapisujemy stan do globalnych
+    getRightDistance();
   }
   cleanPins();
 }
@@ -108,12 +122,8 @@ int normalize(int value) {
   else return value;
 }
 
-void goBack() {
-  digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, HIGH);
-}
-
 void goRight(int angle) {
+  cleanPins();
   getLeftDistance(); // zapisujemy stan do globalnych
   getRightDistance();
 
@@ -132,6 +142,7 @@ void goRight(int angle) {
 
 
 void goLeft(int angle) {
+  cleanPins();
   getLeftDistance(); // zapisujemy stan do globalnych
   getRightDistance();
 
