@@ -29,6 +29,10 @@ float angleInRadians = 0; // Zmienna do przechowywania kąta skrętu w radianach
 const float radiansConversionFactor = 3.14/180; // Stała do przeliczania stopni na radiany
 float arcDistance = 0; //Zmienna do przechowywania dystansu potrzebnego do przejechania żeby uzyskać odpowiedni kąt skrętu
 
+String serialRequest;
+int requestAngle;
+int requestDistanceCm;
+
 // Ważne:
 // - nie robić definicji w petli, globalne zmienne powinny byc (definicja zmiennej kosztuje)
 
@@ -49,7 +53,39 @@ void setup() {
   log("diff left - right cm: ", leftDistanceCm - rightDistanceCm);
 }
 void loop() {
+  checkSerialForRequests();
+}
 
+void checkSerialForRequests() {
+  if (Serial.available() > 0) {
+    // Opis protokołu:
+    // arduino przymuje polecenia na Serial zakończone znakiem &.
+    // Polecenia można łączyć.
+    // przykładowo: F10&R90-10&B5&
+    //
+    // F100& - jazda 100 cm do przodu
+    // B100& - jazda 100 cm do tyłu
+    // R90-100& - skręt o 90 stopni w prawo i przejechanie 100cm
+    // L90-100& - skręt o 90 stopni w lewo i przejechanie 100cm
+    serialRequest = Serial.readStringUntil('&'); // znak & kończy polecenie - jeśli go nie ma, to nie czytamy
+    if (serialRequest[0] == 'F') { // forward - do przodu
+      requestDistanceCm = serialRequest.substring(1).toInt();
+      goForward(requestDistanceCm);
+    } else if (serialRequest[0] == 'B') { // back - do tyłu
+      requestDistanceCm = serialRequest.substring(1).toInt();
+      goBack(requestDistanceCm);
+    } else if (serialRequest[0] == 'R') { // right - w prawo
+      int separatorIndex = serialRequest.indexOf('-', 1);
+      requestDistanceCm = serialRequest.substring(1, separatorIndex).toInt();
+      requestAngle = serialRequest.substring(separatorIndex + 1).toInt();
+      goRight(requestAngle, requestDistanceCm);
+    } else if (serialRequest[0] == 'L') { // left - w lewo
+      int separatorIndex = serialRequest.indexOf('-', 1);
+      requestDistanceCm = serialRequest.substring(1, separatorIndex).toInt();
+      requestAngle = serialRequest.substring(separatorIndex + 1).toInt();
+      goLeft(requestAngle, requestDistanceCm);
+    }
+  }
 }
 
 void leftRotationIncrement() {
@@ -122,7 +158,12 @@ int normalize(int value) {
   else return value;
 }
 
-void goRight(int angle) {
+void goRight(int angle, int cm) {
+  turnRight(angle);
+  goForward(cm);
+}
+
+void turnRight(int angle) {
   cleanPins();
   getLeftDistance(); // zapisujemy stan do globalnych
   getRightDistance();
@@ -140,8 +181,12 @@ void goRight(int angle) {
   cleanPins();
 }
 
+void goLeft(int angle, int cm) {
+  turnLeft(angle);
+  goForward(cm);
+}
 
-void goLeft(int angle) {
+void turnLeft(int angle) {
   cleanPins();
   getLeftDistance(); // zapisujemy stan do globalnych
   getRightDistance();
