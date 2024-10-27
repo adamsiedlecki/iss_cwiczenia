@@ -114,8 +114,6 @@ void checkSerialForRequests() {
         }
         serialRequest = serialRequest.substring(singleCommandEndPos);
 
-        powerLeft = 100;
-        powerRight = 100;
       }
     }
 }
