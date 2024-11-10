@@ -19,12 +19,12 @@ int IN2 = A1;
 int IN3 = A2;
 int IN4 = A3;
 
-int powerLeft = 80;
-int powerRight = 80;
+int powerLeft = 30;
+int powerRight = 30;
 
 int pid;
 
-double kp = 0.33;
+double kp = 0.30;
 double ki = 0;
 double kd = -0.02;
 
@@ -50,10 +50,10 @@ void loop() {
   position = trs.readLine(sensorValues)-2000;
   //Serial.println(position);
   previousPositionSum += position;
-  
+
   if ((position == 2001 || position == -2001) && (prevPosition == 2001 || prevPosition == -2001)) {
     lostCounter++;
-    if (lostCounter > 10) {
+    if (lostCounter > 20) {
       findLine();
       lostCounter = 0;
     }
@@ -64,9 +64,11 @@ void loop() {
   pid = kp * position + ki * previousPositionSum + kd * (position - prevPosition);
   prevPosition = position;
 
+
+
   analogWrite(ENB, normalize(powerRight + pid));
   analogWrite(ENA, normalize(powerLeft - pid));
-  delay(1);
+  //delay(1);
 
 }
 
@@ -74,7 +76,7 @@ void findLine() {
   // powerLeft = 80;
   // powerRight = 80;
   if (position == -2001) {
-    //analogWrite(ENA, powerRight);
+    //analogWrite(ENA, );
     analogWrite(ENB, 0);
     while (position == -2001) {
       position = trs.readLine(sensorValues)-2000;
@@ -82,7 +84,7 @@ void findLine() {
   }
   else {
     analogWrite(ENA, 0);
-    //analogWrite(ENB, powerLeft);
+    //analogWrite(ENB, 120);
     while (position == 2001) {
       position = trs.readLine(sensorValues)-2000;
     }
