@@ -11,9 +11,9 @@ int desiredAngle;
 
 int pid;
 
-double kp = 0.150;
-double ki = 0.00003;
-double kd = 1;
+double kp = 0.16;
+double ki = 0.00005;
+double kd = 7;
 
 float prevDistance = 0;
 float previousDistanceSum = 0;
@@ -33,16 +33,10 @@ void loop() {
   // przeliczanie na cm i centrowanie
   distance_cm = (a / (distance - b)) - 28.5;
   previousDistanceSum += distance_cm;
-  // Serial.print("raw distance: ");
-  // Serial.println(distance);
-  // Serial.print("distance_cm ");
-  // Serial.println(distance_cm);
 
   pid = kp * distance_cm + ki * previousDistanceSum + kd * (distance_cm - prevDistance);
-
 
   desiredAngle = map(pid, -14.5, 14.5, 0, 210);
   myservo.write(desiredAngle);
   Serial.println(desiredAngle);
-  //delay(1);
 }
