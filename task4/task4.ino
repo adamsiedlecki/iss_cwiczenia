@@ -7,11 +7,12 @@ int distIdx;
 int sliskoscIdx;
 int sliskoscVal;
 bool czySlisko;
-double sliskoscDelay = 1000;
+double sliskoscDelay = 0;
 
 double minSliskoBlisko;
 
-double odciete[10];
+double odciete1[10];
+double odciete2[10];
 
 int mocSilnika;
 
@@ -27,7 +28,7 @@ double slisko[10] = {0.0, 0.0, 0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0};
 // min = 90
 double srednio[10] = {0.0, 0.0, 0.0, 0.3, 0.5, 0.7, 0.9, 1.0, 0.0, 0.0};
 double szybko[10] =  {0.0, 0.0, 0.0, 0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-double stop[10] =    {1.0, 0.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+double stop[10] =    {1.0, 0.9, 0.7, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 
 int predkosc[10] =  {0, 90, 110, 130, 150, 170, 190, 210, 230, 250};
@@ -48,8 +49,8 @@ void setup() {
   delayMicroseconds(5);
   Serial.begin(9600);
 
-  digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, HIGH);
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN4, HIGH);
 
   sliskoscIdx = sliskoscDelay / 500;
   sliskoscVal = max(nslisko[sliskoscIdx], slisko[sliskoscIdx]);
@@ -77,20 +78,23 @@ void loop() {
   distIdx = (min(distance, 350) - 50) / 20;
 
   if (blisko[distIdx] > daleko[distIdx]) {
+    Serial.println("blisko");
     // jest blisko
     minSliskoBlisko = min(sliskoscVal, blisko[distIdx]);
-    
-    odetnij(stop, minSliskoBlisko);
-    mocSilnika = sumujILiczSrodekCiezkosci(odciete, srednio, szybko);
+
+    odetnij(srednio, szybko, minSliskoBlisko);
+    mocSilnika = sumujILiczSrodekCiezkosci(stop, odciete1, odciete2);
   } else {
     // jest daleko
     minSliskoBlisko = min(sliskoscVal, daleko[distIdx]);
     if (czySlisko) {
-        odetnij(srednio, minSliskoBlisko);
-        mocSilnika = sumujILiczSrodekCiezkosci(stop, odciete, szybko);
+        Serial.println("daleko slisko");
+        odetnij(stop, szybko, minSliskoBlisko);
+        mocSilnika = sumujILiczSrodekCiezkosci(odciete1, srednio, odciete2);
     } else {
-        odetnij(szybko, minSliskoBlisko);
-        mocSilnika = sumujILiczSrodekCiezkosci(stop, srednio, odciete);
+        Serial.println("daleko nslisko");
+        odetnij(stop, srednio, minSliskoBlisko);
+        mocSilnika = sumujILiczSrodekCiezkosci(odciete1, odciete2, szybko);
     }
   }
 
@@ -101,10 +105,11 @@ void loop() {
   Serial.println(mocSilnika);
 }
 
-void odetnij(double arr[], double threshold) {
+void odetnij(double arr1[], double arr2[], double threshold) {
 
   for (int i = 0; i< 10; i++) {
-    odciete[i] = min(arr[i], threshold);
+    odciete1[i] = min(arr1[i], threshold);
+    odciete2[i] = min(arr2[i], threshold);
   }
 }
 
