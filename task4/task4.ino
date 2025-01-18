@@ -9,7 +9,8 @@ int sliskoscVal;
 bool czySlisko;
 double sliskoscDelay = 0;
 
-double minSliskoBlisko;
+double minBlisko;
+double minDaleko;
 
 double odciete1[10];
 double odciete2[10];
@@ -30,7 +31,6 @@ double srednio[10] = {0.0, 0.0, 0.0, 0.3, 0.5, 0.7, 0.9, 1.0, 0.0, 0.0};
 double szybko[10] =  {0.0, 0.0, 0.0, 0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
 double stop[10] =    {1.0, 0.9, 0.7, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-
 int predkosc[10] =  {0, 90, 110, 130, 150, 170, 190, 210, 230, 250};
 
 int ENA = 5; // left motor
@@ -42,7 +42,6 @@ int IN3 = A2;
 int IN4 = A3;
 
 void setup() {
-  // put your setup code here, to run once:
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   digitalWrite(trigPin, LOW);
@@ -52,13 +51,13 @@ void setup() {
   digitalWrite(IN1, HIGH);
   digitalWrite(IN4, HIGH);
 
-  sliskoscIdx = sliskoscDelay / 500;
+  sliskoscIdx = min(9, sliskoscDelay / 500);
   sliskoscVal = max(nslisko[sliskoscIdx], slisko[sliskoscIdx]);
   czySlisko = slisko[sliskoscIdx] > nslisko[sliskoscIdx];
 }
 
 void loop() {
-    // Trigger the sensor by setting the trigPin high for 10 microseconds:
+  // Trigger the sensor by setting the trigPin high for 10 microseconds:
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
@@ -70,31 +69,30 @@ void loop() {
   Serial.print(distance);
   Serial.println(" cm");
 
-  // blisko i slisko => 0
-  // blisko i nslisko => 0
-  // daleko i slisko => srednio
-  // daleko i nslisko => szybko
+  distIdx = max(0, min(17, (distance - 50) / 20)); // Ograniczenie indeksu od 0 do 17
 
-  distIdx = (min(distance, 350) - 50) / 20;
+  minBlisko = min(sliskoscVal, blisko[distIdx]);
+  minDaleko = min(sliskoscVal, daleko[distIdx]);
 
-  if (blisko[distIdx] > daleko[distIdx]) {
-    Serial.println("blisko");
-    // jest blisko
-    minSliskoBlisko = min(sliskoscVal, blisko[distIdx]);
-
-    odetnij(srednio, szybko, minSliskoBlisko);
-    mocSilnika = sumujILiczSrodekCiezkosci(stop, odciete1, odciete2);
-  } else {
-    // jest daleko
-    minSliskoBlisko = min(sliskoscVal, daleko[distIdx]);
+  if (blisko[distIdx] > daleko[distIdx]) {  // Blisko
     if (czySlisko) {
-        Serial.println("daleko slisko");
-        odetnij(stop, szybko, minSliskoBlisko);
-        mocSilnika = sumujILiczSrodekCiezkosci(odciete1, srednio, odciete2);
+      odetnij(stop, srednio, minBlisko);
+      mocSilnika = sumujILiczSrodekCiezkosci(odciete1, odciete2, srednio);
+      Serial.println("Blisko i slisko: bardzo wolno");
     } else {
-        Serial.println("daleko nslisko");
-        odetnij(stop, srednio, minSliskoBlisko);
-        mocSilnika = sumujILiczSrodekCiezkosci(odciete1, odciete2, szybko);
+      odetnij(srednio, szybko, minBlisko);
+      mocSilnika = sumujILiczSrodekCiezkosci(stop, odciete1, odciete2);
+      Serial.println("Blisko i nieslisko: wolno");
+    }
+  } else {  // Daleko
+    if (czySlisko) {
+      odetnij(stop, szybko, minDaleko);
+      mocSilnika = sumujILiczSrodekCiezkosci(odciete1, srednio, odciete2);
+      Serial.println("Daleko i slisko: średnio");
+    } else {
+      odetnij(stop, srednio, minDaleko);
+      mocSilnika = sumujILiczSrodekCiezkosci(odciete1, odciete2, szybko);
+      Serial.println("Daleko i nieslisko: szybko");
     }
   }
 
@@ -105,6 +103,18 @@ void loop() {
   Serial.println(mocSilnika);
 }
 
+int sumujILiczSrodekCiezkosci(double s1[], double s2[], double s3[]) {
+  double licznik = 0;
+  double mianownik = 0;
+  for (int i = 0; i < 10; i++) {
+    double maxVal = max(s1[i], max(s2[i], s3[i]));
+    licznik += maxVal * predkosc[i];
+    mianownik += maxVal;
+  }
+  if (mianownik == 0) return 0;  // Zabezpieczenie przed dzieleniem przez 0
+  return licznik / mianownik;
+}
+
 void odetnij(double arr1[], double arr2[], double threshold) {
 
   for (int i = 0; i< 10; i++) {
@@ -113,14 +123,4 @@ void odetnij(double arr1[], double arr2[], double threshold) {
   }
 }
 
-int sumujILiczSrodekCiezkosci(double s1[], double s2[], double s3[]) {
-
-  double licznik = 0;
-  double mianownik = 0;
-  for (int i = 0; i< 10; i++) {
-    licznik += max(s1[i], max(s2[i], s3[i])) * predkosc[i];
-    mianownik +=  max(s1[i], max(s2[i], s3[i]));
-  }
-  return licznik / mianownik;
-}
 
